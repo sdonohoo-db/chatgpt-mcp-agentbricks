@@ -1,5 +1,7 @@
 # Connect ChatGPT to Databricks Agent Bricks via MCP
 
+This project is adapted from [`mcp-server-hello-world`](https://github.com/databricks/app-templates/tree/main/mcp-server-hello-world) to add a tool that calls a Databricks Agent Bricks Supervisor agent.
+
 This README describes deploying a custom MCP server with tools to call Databricks Agent Bricks endpoints
 then integrating those tools with ChatGPT. The custom MCP Server will be deployed on Databricks App.
 

@@ -1,10 +1,10 @@
-# Claude.md - MCP Server Hello World
+# Claude.md - MCP Server ChatGPT AgentBricks
 
 This file provides context about this project for AI assistants like Claude.
 
 ## Project Overview
 
-This is a **Model Context Protocol (MCP) server** template built with FastMCP and FastAPI, designed to run as a Databricks App. MCP enables AI assistants to discover and invoke tools/functions exposed by servers.
+This is a **Model Context Protocol (MCP) server** adapted from [`mcp-server-hello-world`](https://github.com/databricks/app-templates/tree/main/mcp-server-hello-world) to add a tool that calls a Databricks Agent Bricks Supervisor agent. Built with FastMCP and FastAPI, it is designed to run as a Databricks App. MCP enables AI assistants to discover and invoke tools/functions exposed by servers.
 
 **Key Concepts:**
 - **MCP Server**: Exposes tools via the Model Context Protocol over HTTP
@@ -52,6 +52,7 @@ app.yaml            # Databricks Apps deployment config
 - **Current tools:**
   - `health`: Simple health check for monitoring
   - `get_current_user`: Returns authenticated user information (display_name, user_name, active status)
+  - `ask_supervisor`: Calls a Databricks Agent Bricks Supervisor agent using on-behalf-of user authentication
 
 ### `server/utils.py`
 - `get_workspace_client()`: Returns WorkspaceClient with app service principal auth (when deployed) or developer auth (local)
@@ -175,6 +176,7 @@ uv run custom-mcp-server --port 8080
 - **uvicorn**: ASGI server
 - **databricks-sdk**: Databricks API client
 - **databricks-mcp**: Databricks MCP client (dev only, for testing)
+- **openai**: OpenAI client for calling Databricks serving endpoints
 - **pydantic**: Data validation
 - **pytest**: Testing framework (dev only, for integration tests)
 
@@ -314,6 +316,7 @@ The `scripts/dev/generate_oauth_token.py` script implements the [OAuth U2M (User
 - **Server host**: Edit `server/main.py` to change from `0.0.0.0`
 - **Project name**: Update `pyproject.toml` name field
 - **MCP server name**: Update `FastMCP(name="...")` in `server/app.py`
+- **Supervisor endpoint**: Edit `WORKSPACE_URL` and `MAS_ENDPOINT_NAME` in `server/tools.py` to point to your Databricks workspace and Agent Bricks Supervisor endpoint
 
 ## Renaming the Project
 
