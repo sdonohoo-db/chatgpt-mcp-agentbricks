@@ -66,11 +66,19 @@ def main():
         print(f"✓ Found {len(tools) if isinstance(tools, list) else 'N/A'} tools")
         print()
 
+        # Test arguments for tools that require parameters
+        test_args = {
+            "ask_supervisor": {"prompt": "Hello, what can you help me with?"},
+        }
+
         for tool in tools:
             print(f"Testing tool: {tool.name}")
             print("-" * 70)
-            health_result = mcp_client.call_tool(tool.name)
-            print(health_result)
+            args = test_args.get(tool.name, {})
+            if args:
+                print(f"Using test arguments: {args}")
+            result = mcp_client.call_tool(tool.name, args)
+            print(result)
             print("-" * 70)
 
         print("=" * 70)
