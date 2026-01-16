@@ -45,14 +45,15 @@ src/app/                    # Application source code
 ### `databricks.yml`
 - Databricks Asset Bundle configuration
 - Defines the app resource, serving endpoint, and deployment targets
-- Contains the `agent_endpoint_name` variable for configuration
+- Contains the `agent_endpoint_name` variable (used for serving endpoint resource)
 - Targets define workspace URLs for dev/prod environments
 
 ### `src/app/app.yaml`
 - Databricks App runtime configuration
 - Specifies the command to run (`uv run custom-mcp-server`)
-- Defines environment variables (`WORKSPACE_URL`, `AGENT_ENDPOINT_NAME`)
-- Environment variables are populated from bundle variables at deploy time
+- Defines environment variables (`AGENT_ENDPOINT_NAME`, `AGENT_DESCRIPTION`)
+- **Important:** DAB variable substitution does NOT work in app.yaml files
+- `DATABRICKS_HOST` is automatically set by Databricks Apps runtime (not defined here)
 
 ### `src/app/server/app.py`
 - Creates FastMCP instance with SSE transport
@@ -364,15 +365,37 @@ The `scripts/dev/generate_oauth_token.py` script implements the [OAuth U2M (User
 
 ### Bundle Configuration (`databricks.yml`)
 
-- **`agent_endpoint_name`**: The name of your Agent Bricks serving endpoint
+- **`agent_endpoint_name`**: The name of your Agent Bricks serving endpoint (used for resource permissions)
 - **`targets.*.workspace.host`**: Databricks workspace URL for each target
 - **`targets.*.mode`**: `development` or `production`
 - User-specific paths use `${workspace.current_user.userName}` substitution
 
+Example:
+```yaml
+variables:
+  agent_endpoint_name:
+    default: my-agent-endpoint
+```
+
 ### App Configuration (`src/app/app.yaml`)
 
 - **`command`**: The command to run the server
-- **`env`**: Environment variables (populated from bundle variables)
+- **`env`**: Environment variables (hardcoded values, no DAB variable substitution)
+  - `AGENT_ENDPOINT_NAME`: Must match the endpoint in databricks.yml
+  - `AGENT_DESCRIPTION`: Description shown to AI clients
+
+**Important limitation:** DAB variable substitution (`${var.*}`, `${workspace.*}`) does NOT work in app.yaml files. Values must be hardcoded. The endpoint name must be configured in both:
+1. `databricks.yml` - for resource permissions via `serving_endpoint.name`
+2. `src/app/app.yaml` - for runtime configuration via `AGENT_ENDPOINT_NAME`
+
+### System Environment Variables (Automatic)
+
+When deployed as a Databricks App, these are automatically set:
+- `DATABRICKS_HOST`: Workspace URL (used by tools.py)
+- `DATABRICKS_APP_NAME`: App name (used to detect deployment context)
+- `DATABRICKS_CLIENT_ID`/`DATABRICKS_CLIENT_SECRET`: Service principal credentials
+
+See [Databricks Apps system environment](https://docs.databricks.com/aws/en/dev-tools/databricks-apps/system-env) for full list.
 
 ### Other Configuration
 

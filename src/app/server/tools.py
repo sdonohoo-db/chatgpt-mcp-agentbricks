@@ -18,9 +18,12 @@ from openai import OpenAI
 
 from server import utils
 
-# Agent Bricks endpoint configuration (set via environment variables in app.yaml)
-WORKSPACE_URL = os.environ.get("WORKSPACE_URL", "")
+# Agent tool configuration
+# DATABRICKS_HOST is automatically set by Databricks Apps runtime
+# AGENT_ENDPOINT_NAME and AGENT_DESCRIPTION are set in app.yaml
+DATABRICKS_HOST = os.environ.get("DATABRICKS_HOST", "")
 AGENT_ENDPOINT_NAME = os.environ.get("AGENT_ENDPOINT_NAME", "")
+AGENT_DESCRIPTION = os.environ.get("AGENT_DESCRIPTION", "Ask questions to the AI agent")
 
 
 def load_tools(mcp_server):
@@ -114,32 +117,9 @@ def load_tools(mcp_server):
         except Exception as e:
             return {"error": str(e), "message": "Failed to retrieve user information"}
 
-    @mcp_server.tool
+    # Define ask_agent with dynamic docstring from AGENT_DESCRIPTION
     def ask_agent(prompt: str) -> dict:
-        """
-        Call a Databricks Agent Bricks agent using on-behalf-of user authentication.
-
-        This tool allows you to query a Databricks Agent Bricks agent endpoint.
-        It uses the authenticated user's token (OBO - On Behalf Of) to make requests.
-
-        Args:
-            prompt: The user question or message to send to the agent.
-
-        Returns:
-            dict: A dictionary containing either:
-                - response (str): The agent's text response
-                - error (str): Error message if the request failed
-                - message (str): Human-readable status message
-
-        Example response:
-            {
-                "response": "Based on the documentation, the answer is..."
-            }
-
-        Raises:
-            Returns error dict if authentication fails, the endpoint is unreachable,
-            or the user lacks permission to query the endpoint.
-        """
+        """Placeholder docstring - replaced dynamically."""
         try:
             # Get the user's OBO token
             token = utils.get_user_token()
@@ -150,10 +130,25 @@ def load_tools(mcp_server):
                     "message": "This tool requires OBO authentication. Running locally without token.",
                 }
 
+            # Validate configuration
+            if not DATABRICKS_HOST:
+                return {
+                    "error": "DATABRICKS_HOST not configured",
+                    "message": "The DATABRICKS_HOST environment variable is not set. This should be automatic in Databricks Apps.",
+                }
+            if not AGENT_ENDPOINT_NAME:
+                return {
+                    "error": "AGENT_ENDPOINT_NAME not configured",
+                    "message": "The AGENT_ENDPOINT_NAME environment variable is not set.",
+                }
+
             # Create OpenAI client pointing to Databricks serving endpoints
+            # Ensure DATABRICKS_HOST has https:// prefix
+            host = DATABRICKS_HOST if DATABRICKS_HOST.startswith("https://") else f"https://{DATABRICKS_HOST}"
+            base_url = f"{host}/serving-endpoints"
             client = OpenAI(
                 api_key=token,
-                base_url=f"{WORKSPACE_URL}/serving-endpoints",
+                base_url=base_url,
             )
 
             # Call the agent using responses.create() API
@@ -192,5 +187,27 @@ def load_tools(mcp_server):
                     "error": error_msg,
                     "message": f"Endpoint '{AGENT_ENDPOINT_NAME}' not found or not accessible.",
                 }
-            return {"error": error_msg, "message": "Failed to query the agent"}
+            # Normalize host for debug output
+            debug_host = DATABRICKS_HOST if DATABRICKS_HOST.startswith("https://") else f"https://{DATABRICKS_HOST}"
+            return {
+                "error": error_msg,
+                "message": "Failed to query the agent",
+                "debug": {
+                    "base_url": f"{debug_host}/serving-endpoints",
+                    "endpoint": AGENT_ENDPOINT_NAME,
+                },
+            }
+
+    # Set the docstring dynamically from AGENT_DESCRIPTION environment variable
+    ask_agent.__doc__ = f"""{AGENT_DESCRIPTION}
+
+    Args:
+        prompt: The question or message to send to the agent.
+
+    Returns:
+        dict: The agent's response or an error message.
+    """
+
+    # Register the tool with the MCP server
+    mcp_server.tool()(ask_agent)
 

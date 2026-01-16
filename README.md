@@ -57,16 +57,15 @@ Copy and save the `client_id` and `client_secret`.
 
 ### 3. Configure the Bundle
 
-Update `databricks.yml` with your configuration:
+Update the configuration with your agent endpoint:
 
-* Set the `agent_endpoint_name` variable default to your Agent Bricks endpoint name
+**In `databricks.yml`:**
+* Set the `agent_endpoint_name` variable to your Databricks serving endpoint
 * Update the `workspace.host` for each target to your Databricks workspace URL
 
-Example:
 ```yaml
 variables:
   agent_endpoint_name:
-    description: Name of the Agent Bricks serving endpoint
     default: my-agent-endpoint
 
 targets:
@@ -74,6 +73,20 @@ targets:
     workspace:
       host: https://adb-xxxxxxxxxxxx.xx.azuredatabricks.net/
 ```
+
+**In `src/app/app.yaml`:**
+* Set `AGENT_ENDPOINT_NAME` to match the endpoint name in databricks.yml
+* Set `AGENT_DESCRIPTION` to describe what the agent does (shown to AI clients like ChatGPT)
+
+```yaml
+env:
+  - name: AGENT_ENDPOINT_NAME
+    value: my-agent-endpoint
+  - name: AGENT_DESCRIPTION
+    value: Ask questions about your data
+```
+
+> **Note:** DAB variable substitution does not work in app.yaml files. The endpoint name must be configured in both databricks.yml (for resource permissions) and app.yaml (for runtime configuration).
 
 Ensure you have authenticated with the Databricks CLI (`databricks auth login`) before deploying.
 

@@ -1,6 +1,8 @@
 command: ["uv", "run", "custom-mcp-server"]
 env:
-  - name: WORKSPACE_URL
-    value: ${workspace.host}
+  # DATABRICKS_HOST is automatically set by Databricks Apps runtime
+  # Configure the agent endpoint name and description below
   - name: AGENT_ENDPOINT_NAME
-    value: ${var.agent_endpoint_name}
+    value: my-agent-endpoint
+  - name: AGENT_DESCRIPTION
+    value: Ask questions to the AI agent

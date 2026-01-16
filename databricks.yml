@@ -2,9 +2,11 @@ bundle:
   name: mcp_chatgpt_agentbricks_bundle
 
 variables:
+  # Agent endpoint name - used for serving endpoint resource
+  # Note: This variable is also hardcoded in src/app/app.yaml because
+  # DAB variable substitution does not work in app.yaml files
   agent_endpoint_name:
-    description: Name of the Agent Bricks serving endpoint
-    default: mas-984580e3-endpoint
+    default: my-agent-endpoint
 
 resources:
   apps:
@@ -12,6 +14,8 @@ resources:
       name: mcp-chatgpt-agentbricks
       description: A Databricks custom MCP server app to enable ChatGPT to call Databricks Agent Bricks endpoints
       source_code_path: src/app
+      user_api_scopes:
+        - serving.serving-endpoints
       resources:
         - name: serving-endpoint
           serving_endpoint:
